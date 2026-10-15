@@ -1,0 +1,31 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.Python
+
+# Secrets
+.env
+
+# Node
+node_modules/
+
+# Robot Framework
+log.html
+report.html
+output.xml
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Local database
+*.db
+instance/
+
+# OS
+.DS_Store
+Thumbs.db

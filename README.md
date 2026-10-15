@@ -69,7 +69,7 @@ Git push
 | API | Python + Flask | Recruiter-aligned backend; Flask first, Django only if a later project needs it |
 | Data | SQL database | Persistent tasks, risks, users, and audit records |
 | UI | React + TypeScript | Full-stack practice after the API works |
-| Tests | pytest | Unit and integration coverage for the API |
+| Tests | Playwright and Robot Framework | Browser end-to-end tests plus keyword-driven acceptance tests for create/update, validation, and access flows |
 | Delivery | Git, GitLab CI, Docker, AWS | DevSecOps path: build, test, scan, deploy |
 | Containers | Docker, then ECS | ECS after containers and AWS basics, not before |
 
@@ -79,7 +79,7 @@ Stick to AWS first: IAM, VPC / networking, S3, EC2, a managed database, and Clou
 
 1. **First version:** Python API, database, and basic pages to create and update work items
 2. **Full-stack:** React + TypeScript frontend connected to the API
-3. **Quality and security:** Automated tests, input validation, role-based access, and audit logging
+3. **Quality and security:** Playwright and Robot Framework tests, input validation, role-based access, and audit logging
 4. **Delivery:** GitLab pipeline that runs tests and security checks, builds a Docker image, and deploys to AWS
 
 Jenkins is only added if a target role specifically uses it. Data science libraries (NumPy, pandas, scikit-learn) are out of scope unless a later role leans that way.
@@ -100,7 +100,7 @@ A portfolio project cannot replace clearance or production federal experience. I
 
 ## Local setup
 
-Prerequisites: Python 3, Node.js, Git, and a virtual environment tool.
+Prerequisites: Python 3, Node.js, Git, and a virtual environment tool. Playwright needs its browsers installed once (`npx playwright install`). Robot Framework installs with the Python dependencies.
 
 ```bash
 git clone <this-repo>
@@ -129,17 +129,20 @@ Exact run commands will be filled in as the API and frontend land in the repo.
 ## Tests
 
 ```bash
-pytest
+npx playwright test
+robot tests/robot
 ```
 
-The goal is unit and integration tests around create/update flows, validation, and access rules—not only happy-path checks.
+The goal is coverage of create/update flows, validation, and access rules—not only happy-path checks. Playwright runs browser end-to-end tests. Robot Framework adds keyword-driven acceptance tests against the same flows.
 
 ## Repository layout (planned)
 
 ```text
 task-and-risk-project-tracker/
-  backend/          Flask API, models, tests
+  backend/          Flask API and models
   frontend/         React + TypeScript UI
+  e2e/              Playwright tests
+  tests/robot/      Robot Framework tests
   docs/             Architecture notes as the project grows
   .gitlab-ci.yml    Test, scan, and build steps
   Dockerfile
@@ -153,7 +156,7 @@ task-and-risk-project-tracker/
 | Programming | Python, modules, virtual environments, Git |
 | Web / API | HTTP, JSON, SQL, Flask |
 | Frontend | JavaScript, then TypeScript and React |
-| Quality | pytest, debugging, code review, a clear README |
+| Quality | Playwright, Robot Framework, debugging, code review, a clear README |
 | Cloud | AWS first: IAM, networking, storage, compute, then Docker and ECS |
 | DevSecOps | GitLab CI, automated tests, scanning, least-privilege access |
 | Workflow | Small iterations, a task board, and explaining technical decisions |
