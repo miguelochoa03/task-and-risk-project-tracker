@@ -102,27 +102,20 @@ A portfolio project cannot replace clearance or production federal experience. I
 
 Prerequisites: Python 3, Node.js, Git, and a virtual environment tool. Playwright needs its browsers installed once (`npx playwright install`). Robot Framework installs with the Python dependencies.
 
+Work in WSL Ubuntu. Keep the repo under `~/projects`, not a Windows path.
+
+Work in WSL Ubuntu. Keep the repo under `~/projects`, not a Windows path.
+
 ```bash
 git clone <this-repo>
 cd task-and-risk-project-tracker
 
-# Backend
-python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# macOS / Linux
+python3 -m venv .venv
 source .venv/bin/activate
-
 pip install -r requirements.txt
-# then start the Flask API (command will live here once the API exists)
-
-# Frontend
-cd frontend
-npm install
-npm run dev
 ```
 
-Copy `.env.example` to `.env` and fill in local values. Do not commit `.env`.
+Copy `.env.example` to `.env` if you do not already have one. Do not commit `.env`.
 
 Exact run commands will be filled in as the API and frontend land in the repo.
 
