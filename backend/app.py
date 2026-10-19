@@ -5,7 +5,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, redirect, render_template, url_for
 
 from models import (
     RISK_SEVERITIES,
@@ -277,6 +277,91 @@ def register_routes(app):
                 "risks_total": Risk.query.count(),
             }
         )
+
+    @app.get("/pages")
+    def pages_dashboard():
+        # load all tasks so they can be checked for overdue and blocked status
+        tasks = Task.query.all()
+        today = date.today()
+
+        # a task is overdue if it has a due date before today and isn't done
+        overdue = [
+            task
+            for task in tasks
+            if task.due_date is not None
+            and task.due_date < today
+            and task.status != "done"
+        ]
+
+        # collect tasks whose status is "blocked"
+        blocked = [task for task in tasks if task.status == "blocked"]
+
+
+        return render_template(
+            "dashboard.html",
+            tasks_total=len(tasks),
+            tasks_overdue=len(overdue),
+            tasks_blocked=len(blocked),
+            risks_total=Risk.query.count(),
+        )
+
+    @app.get("/pages/tasks")
+    def pages_list_tasks():
+        tasks = Task.query.order_by(Task.id).all()
+        return render_template("tasks.html", tasks=tasks)
+
+    @app.get("/pages/tasks/new")
+    def pages_new_task():
+        return render_template(
+            "task_form.html",
+            task=None,
+            error=None,
+            action=url_for("pages_create_task"),
+            priorities=TASK_PRIORITIES,
+            statuses=TASK_STATUSES,
+        )
+
+    @app.post("/pages/tasks/new")
+    def pages_create_task():
+        title = (request.form.get("title") or "").strip()
+        if not title:
+            return render_template(
+                "task_form.html",
+                task=None,
+                error="title is required",
+                action=url_for("pages_create_task"),
+                priorities=TASK_PRIORITIES,
+                statuses=TASK_STATUSES,
+            ), 400
+
+        due_date = parse_due_date(request.form.get("due_date"))
+        if due_date == "invalid":
+            return render_template(
+                "task_form.html",
+                task=None,
+                error="due_date must be YYYY-MM-DD",
+                action=url_for("pages_create_task"),
+                priorities=TASK_PRIORITIES,
+                statuses=TASK_STATUSES,
+            ), 400
+
+        task = Task(
+            title=title,
+            description=request.form.get("description") or "",
+            priority=request.form.get("priority") or "medium",
+            owner=request.form.get("owner") or "",
+            due_date=due_date,
+            status=request.form.get("status") or "open",
+        )
+
+        db.session.add(task)
+        db.session.commit()
+
+        return redirect(url_for("pages_list_tasks"))
+
+    @app.get("/pages/tasks/<int:task_id>/edit")
+    def pages_edit_task(task_id):
+        pass
 
 # calls function that creates and configures the Flask app,
 # sets up the database connection, creates any missing tables,
