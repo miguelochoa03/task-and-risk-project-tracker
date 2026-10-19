@@ -55,7 +55,7 @@ def parse_due_date(value):
         return None
     try:
         # parse a date written like "2026-10-18"
-        return datetime.strptime(value, "%Y-%m-d").date()
+        return datetime.strptime(value, "%Y-%m-%d").date()
     except (TypeError, ValueError):
         # return a marker when the value isn't a valid date string
         return "invalid"
