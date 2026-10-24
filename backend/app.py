@@ -296,7 +296,7 @@ def register_routes(app):
         # collect tasks whose status is "blocked"
         blocked = [task for task in tasks if task.status == "blocked"]
 
-
+        # renders dashboard.html, passing in counts for all tasks, overdues, blocked, and all risks
         return render_template(
             "dashboard.html",
             tasks_total=len(tasks),
@@ -305,18 +305,24 @@ def register_routes(app):
             risks_total=Risk.query.count(),
         )
 
+    # gets all tasks ordered by their database ID, then passes them to tasks.html as tasks
     @app.get("/pages/tasks")
     def pages_list_tasks():
+        # runs the query and gets all matching Task objects as a Python list, ordered by Task.id
         tasks = Task.query.order_by(Task.id).all()
+
+        # renders tasks.html, passing in all tasks ordererd by ID
         return render_template("tasks.html", tasks=tasks)
 
+    # will be used to show the blank form for creating a new task
     @app.get("/pages/tasks/new")
     def pages_new_task():
+        # renders task_form.html, passing in these values
         return render_template(
             "task_form.html",
-            task=None,
-            error=None,
-            action=url_for("pages_create_task"),
+            task=None, # None means the form is for a new task, not editing an existing one
+            error=None, # There is no form error yet
+            action=url_for("pages_create_task"), # Sets url for the task-creation route
             priorities=TASK_PRIORITIES,
             statuses=TASK_STATUSES,
         )
