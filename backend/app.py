@@ -361,7 +361,110 @@ def register_routes(app):
 
     @app.get("/pages/tasks/<int:task_id>/edit")
     def pages_edit_task(task_id):
-        pass
+        task = db.session.get(Task, task_id)
+        if task is None:
+            return "task not found", 404
+        return render_template(
+            "task_form.html",
+            task=task,
+            error=None,
+            action=url_for("pages_update_task", task_id=task.id),
+            priorities=TASK_PRIORITIES,
+            statuses=TASK_STATUSES,
+        )
+
+    @app.post("/pages/tasks/<int:task_id>/edit")
+    def pages_update_task(task_id):
+        task = db.sessio.get(Task, task_id)
+        if task is None:
+            return "task not found", 404
+
+        title = (request.form.get("title") or "").strip()
+        if not title:
+            return render_template(
+                "task_form.html",
+                task=task,
+                error="title is required",
+                action=url_for("pages_update_task", task_id=task.id),
+                priorities=TASK_PRIORITIES,
+                statuses=TASK_STATUSES,
+            ), 400
+
+        due_date = parse_due_date(request.form.get("due_date"))
+        if due_date == "invalid":
+            return render_template(
+                "task_form.html",
+                task=task,
+                error="due_date must be YYYY-MM-DD",
+                action=url_for("pages_update_task", task_id=task.id),
+                priorities=TASK_PRIORITIES,
+                statuses=TASK_STATUSES,
+            ), 400
+
+        task.title = title
+        task.description = request.form.get("description") or ""
+        task.priority = request.form.get("priority") or "medium"
+        task.owner = request.form.get("owner") or ""
+        task.due_date = due_date
+        task.status = request.form.get("status") or "open"
+        db.session.commit()
+        return redirect(url_for("pages_list_tasks"))
+
+    @app.get("/pages/risks")
+    def pages_list_risks():
+        risks = Risk.query.order_by(Risk.id).all()
+        return render_template("risks.html", risks=risks)
+
+    @app.get("/pages/risks/new")
+    def pages_new_risk():
+        return render_template(
+            "risk_form.html",
+            error=None,
+            action=url_for("pages_create_risk"),
+            severities=RISK_SEVERITIES,
+            statuses=RISK_STATUSES,
+            tasks=Task.query.order_by(Task.id).all(),
+        )
+
+    @app.post("/pages/risks/new")
+    def pages_create_risk():
+        title = (request.form.get("title") or "").strip()
+        tasks = Task.query.order_by(Task.id).all()
+        if not title:
+            return render_template(
+                "risk_form.html",
+                error="title is required",
+                action=url_for("pages_create_risk"),
+                severities=RISK_SEVERITIES,
+                statuses=RISK_STATUSES,
+                tasks=tasks,
+            ), 400
+
+        task_id_raw = (request.form.get("task_id") or "").strip()
+        task_id = int(task_id_raw) if task_id_raw else None
+        if task_id is not None and db.session.get(Task, task_id) is None:
+            return render_template(
+                "risk_form.html",
+                error="task not found",
+                action=url_for("pages_create_risk"),
+                severities=RISK_SEVERITIES,
+                statuses=RISK_STATUSES,
+                tasks=tasks,
+            ), 400
+
+        risk = Risk(
+            title=title,
+            description=request.form.get("description") or "",
+            severity=request.form.get("severity") or "medium",
+            owner=request.form.get("owner") or "",
+            status=request.form.get("status") or "open",
+            task_id=task_id,
+        )
+        db.session.add(risk)
+        db.session.commit()
+        return redirect(url_for("pages_list_risks"))
+
+    
 
 # calls function that creates and configures the Flask app,
 # sets up the database connection, creates any missing tables,
