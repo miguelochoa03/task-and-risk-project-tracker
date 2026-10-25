@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>New risk</title>
+    </head>
+
+    <body>
+        <p>
+            <a href="/pages">Dashboard</a>
+            <a href="/pages/tasks">Tasks</a>
+            <a href="/pages/risks">Risks</a>
+        </p>
+        <h1>New risk</h1>
+        {% if error %}
+        <p>{{ error }}</p>
+        {% endif %}
+        <form method="post" action="{{ action }}">
+            <p>
+                Title:
+                <input type="text" name="title" />
+                </p>
+                    <p>
+                        Description:<br />
+                        <textarea name="description"></textarea>
+                    </p>
+                    <p>
+                        Owner:
+                        <input type="text" name="owner" />
+                    </p>
+                    <p>
+                        Severity:
+                        <select name="severity">
+                            {% for item in serverities %}
+                            <option value="{{ item }}">{{ item }}</option>
+                            {% endfor %}
+                        </select>
+                    </p>
+                    <p>
+                        Status:
+                        <select name="status">
+                            {% for item in statuses %}
+                            <option value="{{ item }}">{{ item }}</option>
+                            {% endfor %}
+                        </select>
+                    </p>
+                    <p>
+                        Linked task:
+                        <select name="task_id">
+                            <option value="">None</option>
+                            {% for task in tasks %}
+                            <option value="{{ task.id }}">{{ task.id }} - {{ task.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </p>
+                    <p><button type="submit">Save</button></p>
+            </p>
+        </form>
+    </body>
+</html>

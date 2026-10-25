@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Risks</title>
+    </head>
+    <body>
+        <p>
+            <a href="/pages">Dashboard</a>
+            <a href="/pages/tasks">Tasks</a>
+            <a href="/pages/risks">Risks</a>
+        </p>
+        <h1>Risks</h1>
+        <p><a href="/pages/risks/new">New risk</a></p>
+        <table border="1">
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Owner</th>
+                <th>Severity</th>
+                <th>Status</th>
+                <th>Task ID</th>
+            </tr>
+            {% for risk in risks %}
+            <tr>
+                <td>{{ risk.id }}</td>
+                <td>{{ risk.title }}</td>
+                <td>{{ risk.owner }}</td>
+                <td>{{ risk.severity }}</td>
+                <td>{{ risk.status }}</td>
+                <td>{{ risk.task_id }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </body>
+</html>
