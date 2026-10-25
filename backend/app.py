@@ -323,13 +323,17 @@ def register_routes(app):
             task=None, # None means the form is for a new task, not editing an existing one
             error=None, # There is no form error yet
             action=url_for("pages_create_task"), # Sets url for the task-creation route
-            priorities=TASK_PRIORITIES,
-            statuses=TASK_STATUSES,
+            priorities=TASK_PRIORITIES, # passing in the priorities levels
+            statuses=TASK_STATUSES, # passing in the statuses levels
         )
 
+    # create new task
     @app.post("/pages/tasks/new")
     def pages_create_task():
+        # gets the title, also removes whitespace
         title = (request.form.get("title") or "").strip()
+
+        # if the title is blank, return error into task_form.html
         if not title:
             return render_template(
                 "task_form.html",
@@ -340,7 +344,10 @@ def register_routes(app):
                 statuses=TASK_STATUSES,
             ), 400
 
+        # parse the submitted due date
         due_date = parse_due_date(request.form.get("due_date"))
+
+        # if the due date is incorrect, return error back to task_form.html
         if due_date == "invalid":
             return render_template(
                 "task_form.html",
@@ -351,6 +358,7 @@ def register_routes(app):
                 statuses=TASK_STATUSES,
             ), 400
 
+        # create a task object with submitted form values
         task = Task(
             title=title,
             description=request.form.get("description") or "",
@@ -360,32 +368,50 @@ def register_routes(app):
             status=request.form.get("status") or "open",
         )
 
+        # add the new task to the database session
         db.session.add(task)
+
+        # save to database session
         db.session.commit()
 
+        # redirect page to the listing-all-tasks page route
         return redirect(url_for("pages_list_tasks"))
 
+    # show the edit form for the task whose ID is in the URL
+    # <int:task_id> means Flask expects task_id to be an integer
     @app.get("/pages/tasks/<int:task_id>/edit")
     def pages_edit_task(task_id):
+        # get the task object by its ID in the database
         task = db.session.get(Task, task_id)
+
+        # if no task that has that ID, then return 404 "not found" response
         if task is None:
             return "task not found", 404
+
+        # render the task_form.html, filling it with the task's current values
         return render_template(
             "task_form.html",
-            task=task,
-            error=None,
-            action=url_for("pages_update_task", task_id=task.id),
-            priorities=TASK_PRIORITIES,
-            statuses=TASK_STATUSES,
+            task=task, # passes in the ID-specified task
+            error=None, # no error
+            action=url_for("pages_update_task", task_id=task.id), # pass in the url for the update-task route for this ID-specified task
+            priorities=TASK_PRIORITIES, # passes in priorities levels
+            statuses=TASK_STATUSES, # passes in statuses levels
         )
 
+    # update the ID-specified task
     @app.post("/pages/tasks/<int:task_id>/edit")
     def pages_update_task(task_id):
-        task = db.sessio.get(Task, task_id)
+        # get the task object by its ID from the database session
+        task = db.session.get(Task, task_id)
+
+        # if no task with that ID, then return a 404 response
         if task is None:
             return "task not found", 404
 
+        # read the submitted title, also removes any white space
         title = (request.form.get("title") or "").strip()
+
+        # if no title, then tasK_form.html will return with error that title is missing
         if not title:
             return render_template(
                 "task_form.html",
@@ -396,7 +422,10 @@ def register_routes(app):
                 statuses=TASK_STATUSES,
             ), 400
 
+        # parse the submitted due date
         due_date = parse_due_date(request.form.get("due_date"))
+
+        # if the due date format is incorrect, then task_form.html will return error that due date is incorrect
         if due_date == "invalid":
             return render_template(
                 "task_form.html",
@@ -407,22 +436,34 @@ def register_routes(app):
                 statuses=TASK_STATUSES,
             ), 400
 
+        # replace the ID-specified task saved values with the values from the HTML form
         task.title = title
         task.description = request.form.get("description") or ""
         task.priority = request.form.get("priority") or "medium"
         task.owner = request.form.get("owner") or ""
         task.due_date = due_date
         task.status = request.form.get("status") or "open"
+
+        # save changes to the database session
         db.session.commit()
+
+        # redirect page to the list-tasks page url
         return redirect(url_for("pages_list_tasks"))
 
+    # shows the list of risks
     @app.get("/pages/risks")
     def pages_list_risks():
-        risks = Risk.query.order_by(Risk.id).all()
+        # gets all risks ordered by their ID's
+        risks = Risk.query.order_by(Risk.id).all() # .all() makes the query return all database records as a Python list
+
+        # render the risk.html, passing in all the risks
         return render_template("risks.html", risks=risks)
 
+    # 
     @app.get("/pages/risks/new")
     def pages_new_risk():
+
+        # renders risk_form.html, passing in url for the risk-creating route, severities levels, risk statuses levels, and all tasks (ordered by ID)
         return render_template(
             "risk_form.html",
             error=None,
@@ -432,32 +473,47 @@ def register_routes(app):
             tasks=Task.query.order_by(Task.id).all(),
         )
 
+    # process the submitted form and create a new risk
     @app.post("/pages/risks/new")
     def pages_create_risk():
+
+        # get submitted title and removes whitespace
         title = (request.form.get("title") or "").strip()
+
+        # gets all tasks ordered by ID, the point is to show them again if validation fails?
         tasks = Task.query.order_by(Task.id).all()
+
+        # if there's no submitted title, then render risk_form.html saying error, title is required
         if not title:
             return render_template(
                 "risk_form.html",
-                error="title is required",
-                action=url_for("pages_create_risk"),
-                severities=RISK_SEVERITIES,
-                statuses=RISK_STATUSES,
+                error="title is required", # gives error
+                action=url_for("pages_create_risk"), # gives url to create risk
+                severities=RISK_SEVERITIES, # severities levels
+                statuses=RISK_STATUSES, # risk statuses levels
                 tasks=tasks,
-            ), 400
+            ), 400 # HTTP 400 means the submitted form has invalid data
 
+        # get submitted task_id (also removes any whitespace)
         task_id_raw = (request.form.get("task_id") or "").strip()
+
+        # converts the task_id_raw into int and checks if there is a task else None
+        # this assumes that a non-empty task_id_raw contains a valid integer
         task_id = int(task_id_raw) if task_id_raw else None
+
+        # if a task_id was provided correctly, check if it exists in the database
+        # if it doesnt, render risk_form.html saying error task not found
         if task_id is not None and db.session.get(Task, task_id) is None:
             return render_template(
                 "risk_form.html",
                 error="task not found",
-                action=url_for("pages_create_risk"),
+                action=url_for("pages_create_risk"), # gives url to the risk-creation route
                 severities=RISK_SEVERITIES,
                 statuses=RISK_STATUSES,
                 tasks=tasks,
             ), 400
 
+        # creates a risk object with the submitted values
         risk = Risk(
             title=title,
             description=request.form.get("description") or "",
@@ -466,8 +522,14 @@ def register_routes(app):
             status=request.form.get("status") or "open",
             task_id=task_id,
         )
+
+        # adds new risk to the database session 
         db.session.add(risk)
+
+        # saves the new risk to the database
         db.session.commit()
+
+        # redirect page to the risk-list page
         return redirect(url_for("pages_list_risks"))
 
     
